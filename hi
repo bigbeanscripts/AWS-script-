@@ -717,6 +717,41 @@ local function toggleAutoHatch(value)
 end
 
 
+-- Function to teleport the player to the selected egg's model world pivot
+local function teleportToSelectedEgg()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+    local eggModel
+    for _, zone in pairs(workspace.Zones:GetChildren()) do
+        local eggsFolder = zone:FindFirstChild("Interactables") and zone.Interactables:FindFirstChild("Eggs")
+        if eggsFolder then
+            for _, model in pairs(eggsFolder:GetChildren()) do
+                if model.Name:lower():find(selectedEgg:lower()) then
+                    eggModel = model
+                    break
+                end
+            end
+            if eggModel then
+                break
+            end
+        end
+    end
+
+    if eggModel then
+        local originalCFrame = humanoidRootPart.CFrame
+        local targetCFrame = eggModel:GetPivot()
+        humanoidRootPart.CFrame = targetCFrame * CFrame.new(0, 0, -5) -- Slightly in front
+
+        -- Teleport back after the specified delay
+        wait(teleportDelay)
+        humanoidRootPart.CFrame = originalCFrame
+    else
+        warn("Egg model not found in workspace: " .. selectedEgg)
+    end
+end
+
 -- Add dropdown to select eggs with search feature
 Tabs.Eggs:AddDropdown("SelectEggDropdown", {
     Title = "Select Egg",
@@ -738,6 +773,8 @@ Tabs.Eggs:AddDropdown("SelectHatchMultiplier", {
     end
 })
 
+
+
 -- Add toggle to start/stop auto-hatching
 Tabs.Eggs:AddToggle("AutoHatchToggle", {
     Title = "Auto Hatch",
@@ -751,6 +788,30 @@ Tabs.Eggs:AddParagraph({
     Title = "Must Read",
     Content = "If you select Max from the hatch multiplier dropdown, it will hatch the maximum amount of eggs that the player can/owns."
 })
+
+Tabs.Eggs:AddSection("Auto Delete -- Teleport")
+
+-- Add input to set the delay between teleports
+Tabs.Eggs:AddInput("TeleportDelayInput", {
+    Title = "Teleport back from egg delay",
+    Default = 7,
+    Placeholder = "Enter teleport back delay in seconds",
+    Numeric = true, -- Only allows numbers
+    Finished = false, -- Only calls callback when you press enter
+    Callback = function(value)
+        teleportDelay = tonumber(value) or teleportDelay
+    end
+})
+
+-- Add button to teleport to the selected egg's model world pivot
+Tabs.Eggs:AddButton({
+    Title = "Teleport to Selected Egg (and back)",
+    Description = "Teleport to the selected egg -- If its still a model -- so you can auto delete pets. The teleport input is for how long you will stay at the egg, before teleporting back.",
+    Callback = function()
+        teleportToSelectedEgg()
+    end
+})
+
 
 
 
@@ -1348,7 +1409,7 @@ AutoCircusEggToggle:OnChanged(function()
             while AutoCircusEggToggle.Value do
                 game:GetService("ReplicatedStorage").Packages.Knit.Services.EventEggService.RF.Claim:InvokeServer()
 
-                task.wait(300) -- Wait 300 seconds (5 minutes) before claiming again
+                task.wait(30) -- Wait 300 seconds (5 minutes) before claiming again
             end
         end)
     else
