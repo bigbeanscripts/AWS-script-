@@ -794,8 +794,8 @@ Tabs.Eggs:AddSection("Auto Delete -- Teleport")
 -- Add input to set the delay between teleports
 Tabs.Eggs:AddInput("TeleportDelayInput", {
     Title = "Teleport back from egg delay",
-    Default = 7,
-    Placeholder = "Enter teleport back delay in seconds",
+    Default = teleportDelay,
+    Placeholder = "Enter teleport back delay",
     Numeric = true, -- Only allows numbers
     Finished = false, -- Only calls callback when you press enter
     Callback = function(value)
